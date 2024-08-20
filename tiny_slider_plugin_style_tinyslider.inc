@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Style plugin to render items as TimelineJS3 slides.
+ * Style plugin to render items as Tiny slides.
  *
  * @ingroup views_style_plugins
  */
@@ -27,13 +27,7 @@ class tiny_slider_plugin_style_tinyslider extends views_plugin_style {
    * {@inheritdoc}
    */
   function options_form(&$form, &$form_state) {
-
     parent::options_form($form, $form_state);
-    // Timeline general configuration.  Values within this fieldset will be
-    // passed directly to the TimelineJS settings object.  As a result, form
-    // element keys should be given the same ID as TimelineJS settings, e.g.
-    // $form['id_of_timelinejs_option'].  See the list of
-    // options at https://timeline.knightlab.com/docs/options.html.
 
     $hideOnAdvancedMode = [
       'visible' => [

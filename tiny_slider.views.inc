@@ -1,16 +1,16 @@
 <?php
 /**
  * @file
- * Defines the View Style Plugins for Views TimelineJS module.
+ * Defines the View Style Plugins for Views TinySlider module.
  */
 
 /**
  * Implements hook_views_plugins().
  */
 function tiny_slider_views_plugins() {
-  return array(
-    'style' => array(
-      'tinyslider' => array(
+  return [
+    'style' => [
+      'tinyslider' => [
         'title' => t('TinySlider'),
         'help' => t('Display the results in a Tiny Slider.'),
         'handler' => 'tiny_slider_plugin_style_tinyslider',
@@ -24,7 +24,7 @@ function tiny_slider_views_plugins() {
         'theme' => 'tiny_slider',
         'theme path' => backdrop_get_path('module', 'tiny_slider') . '/theme',
         'theme file' => 'tiny_slider.theme.inc',
-      ),
-    ),
-  );
+      ],
+    ],
+  ];
 }

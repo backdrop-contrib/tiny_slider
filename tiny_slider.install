@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains install, uninstall, and update hooks for Views TimelineJS.
+ * Contains install, uninstall, and update hooks for Views TinySlider.
  */
 
 /**

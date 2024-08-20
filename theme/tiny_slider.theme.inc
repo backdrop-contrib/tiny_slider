@@ -16,7 +16,7 @@
  *   - rows: The raw row data.
  */
 function template_preprocess_tiny_slider(array &$vars) {
-  $view = $vars['view'];
+  $library_location = config_get('tiny_slider.settings', 'library');
   $handler = $vars['view']->style_plugin;
 
   $settings = _tiny_slider_format_settings($handler->options);
@@ -33,7 +33,7 @@ function template_preprocess_tiny_slider(array &$vars) {
 
   backdrop_add_library('system', 'jquery', TRUE);
   backdrop_add_library('system', 'jquery.once', TRUE);
-  $attached = backdrop_add_library('tiny_slider', 'tinyslider.local');
+  $attached = backdrop_add_library('tiny_slider', 'tinyslider.' . $library_location);
 
   render($attached);
   template_preprocess_views_view_unformatted($vars);

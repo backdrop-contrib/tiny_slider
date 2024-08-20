@@ -6,4 +6,5 @@ package = media
 php = 5.3.0
 backdrop = 1.x
 type = module
+configure = admin/config/development/tiny_slider
 

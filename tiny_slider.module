@@ -27,6 +27,55 @@ function tiny_slider_config_info() {
 }
 
 /**
+ * Implements hook_menu().
+ */
+function tiny_slider_menu() {
+  $items['admin/config/development/tiny_slider'] = [
+    'title' => 'Tiny Slider Configuration',
+    'description' => 'Configure settings related to the Tiny Slider library.',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => ['tiny_slider_settings_form'],
+    'access arguments' => ['administer site configuration'],
+  ];
+
+  return $items;
+}
+
+/**
+ * Admin settings menu callback.
+ *
+ * @see tiny_slider_menu()
+ */
+function tiny_slider_settings_form() {
+  $form['tiny_slider_library_info'] = [
+    '#type' => 'radios',
+    '#title' => t('Tiny Slider library location'),
+    '#description' => t('If serving the files from a local path, the library MUST be located in  the module directory libraries/tiny-slider.  See the module README file for more information.'),
+    '#options' => [
+      'cdn' => t('Cloudflare CDN'),
+      'local' => t('Local path (Tiny Slider libraries)'),
+    ],
+    '#default_value' => config_get('tiny_slider.settings', 'library'),
+  ];
+  $form['actions']['#type'] = 'actions';
+  $form['actions']['submit'] = [
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  ];
+  return $form;
+}
+
+/**
+ * Submit callback for tiny_slider_settings_form.
+ */
+function tiny_slider_settings_form_submit($form, &$form_state) {
+  $config = config('tiny_slider.settings');
+  $config->set('library', $form_state['values']['tiny_slider_library_info']);
+  $config->save();
+  backdrop_set_message(t('The configuration options have been saved.'));
+}
+
+/**
  * Implements hook_library().
  *
  * The css_library_group variable provides backward
@@ -38,13 +87,12 @@ function tiny_slider_config_info() {
  */
 function tiny_slider_library_info() {
   $config = config('tiny_slider.settings');
-  global $base_url;
   $libraries = [];
 
   $libraries['tinyslider.local'] = [
     'title' => 'tiny_slider',
     'website' => 'https://github.com/ganlanyuan/tiny-slider',
-    'version' => '3.3.15',
+    'version' => '2.9.3',
     'js' => [
       'tiny-slider.js' => [
         'data' => backdrop_get_path('module', 'tiny_slider') . '/libraries/tiny-slider/dist/tiny-slider.js',
@@ -63,6 +111,36 @@ function tiny_slider_library_info() {
         'data' => backdrop_get_path('module', 'tiny_slider') . '/libraries/tiny-slider/dist/tiny-slider.css',
         'type' => 'external',
         'group' => CSS_DEFAULT,
+      ],
+      'tiny_slider.css' => [
+        'data' => backdrop_get_path('module', 'tiny_slider') . '/css/tiny_slider.css',
+        'type' => 'external',
+        'group' => CSS_DEFAULT,
+      ],
+    ],
+  ];
+
+  $libraries['tinyslider.cdn'] = [
+    'title' => 'tiny_slider',
+    'website' => 'https://github.com/ganlanyuan/tiny-slider',
+    'version' => '2.9.3',
+    'js' => [
+      'tiny-slider.js' => [
+        'data' => 'https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.3/min/tiny-slider.js',
+        'type' => 'external',
+        'group' => JS_LIBRARY,
+      ],
+      'tiny_slider.js' => [
+        'data' => backdrop_get_path('module', 'tiny_slider') . '/js/tiny_slider.js',
+        'type' => 'external',
+        'group' => JS_LIBRARY,
+      ],
+    ],
+    'css' => [
+      'tiny-slider.css' => [
+        'data' => 'https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.3/tiny-slider.css',
+        'type' => 'external',
+        'group' => $config->get('css_library_group'),
       ],
       'tiny_slider.css' => [
         'data' => backdrop_get_path('module', 'tiny_slider') . '/css/tiny_slider.css',
