@@ -1,0 +1,9 @@
+name = Tiny Slider
+description = Tiny Slider vanilla JS plugin integration module.
+dependencies[] = field
+dependencies[] = image
+package = media
+php = 5.3.0
+backdrop = 1.x
+type = module
+

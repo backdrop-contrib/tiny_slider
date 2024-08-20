@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * @file
+ * Contains install, uninstall, and update hooks for Views TimelineJS.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function tiny_slider_uninstall() {
+  config_clear('tiny_slider.settings', 'css_library_group');
+}
+
