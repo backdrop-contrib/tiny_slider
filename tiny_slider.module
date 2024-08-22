@@ -388,7 +388,7 @@ function tiny_slider_field_formatter_info() {
   return [
     'tiny_slider_field_formatter' => [
       'label' => t('Tiny Slider Carousel'),
-      'field types' => ['image', 'entityreference'],
+      'field types' => ['image'],
       'settings' => defaultSettings(),
     ],
   ];
