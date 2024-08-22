@@ -8,14 +8,14 @@
 /**
  * Prepares variables for views carousel template.
  *
- * Default template: views-bootstrap-carousel.html.twig.
+ * Default template: tiny-slider-views.tpl.php.
  *
  * @param array $vars
  *   An associative array containing:
  *   - view: A ViewExecutable object.
  *   - rows: The raw row data.
  */
-function template_preprocess_tiny_slider(array &$vars) {
+function template_preprocess_tiny_slider_views(array &$vars) {
   $library_location = config_get('tiny_slider.settings', 'library');
   $handler = $vars['view']->style_plugin;
 
@@ -38,3 +38,4 @@ function template_preprocess_tiny_slider(array &$vars) {
   render($attached);
   template_preprocess_views_view_unformatted($vars);
 }
+

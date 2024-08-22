@@ -21,9 +21,9 @@ function tiny_slider_views_plugins() {
         'uses row class' => TRUE,
         'type' => 'normal',
         'path' => backdrop_get_path('module', 'tiny_slider'),
-        'theme' => 'tiny_slider',
+        'theme' => 'tiny_slider_views',
         'theme path' => backdrop_get_path('module', 'tiny_slider') . '/theme',
-        'theme file' => 'tiny_slider.theme.inc',
+        'theme file' => 'tiny_slider_views.theme.inc',
       ],
     ],
   ];

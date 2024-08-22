@@ -380,3 +380,642 @@ function isValidJson($string) {
   json_decode($string);
   return json_last_error() === JSON_ERROR_NONE;
 }
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function tiny_slider_field_formatter_info() {
+  return [
+    'tiny_slider_field_formatter' => [
+      'label' => t('Tiny Slider Carousel'),
+      'field types' => ['image', 'entityreference'],
+      'settings' => defaultSettings(),
+    ],
+  ];
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function tiny_slider_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  $element = [];
+
+  $json_config_default = json_encode(_tiny_slider_default_settings(), JSON_PRETTY_PRINT);
+
+  $hideOnAdvancedMode = [
+    'visible' => [
+      ':input[type="checkbox"].tns--toggle-advanced-mode' => ['checked' => FALSE],
+    ],
+  ];
+  $image_styles = image_style_options(FALSE);
+
+  if ($display['type'] == 'tiny_slider_field_formatter') {
+    $element['image_style'] = [
+      '#title' => t('Image style'),
+      '#type' => 'select',
+      '#default_value' => $settings['image_style'],
+      '#empty_option' => t('None (original image)'),
+      '#options' => $image_styles,
+      '#description' => t('Image styles list'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+    // Link image to.
+    $element['image_link'] = [
+      '#title' => ('Link image to'),
+      '#type' => 'select',
+      '#default_value' => $settings['image_link'],
+      '#empty_option' => t('Nothing'),
+      '#options' => [
+        'content' => t('Content'),
+        'file' => t('File'),
+      ],
+      '#states' => $hideOnAdvancedMode,
+    ];
+    // Items.
+    $element['items'] = [
+      '#type' => 'number',
+      '#step' => '.1',
+      '#title' => t('Items'),
+      '#default_value' => $settings['items'],
+      '#description' => t('Maximum amount of items displayed at a time with the widest browser width.'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // Gutter.
+    $element['gutter'] = [
+      '#type' => 'number',
+      '#title' => t('Gutter'),
+      '#default_value' => !empty($settings['gutter']) ? $settings['gutter'] : 0,
+      '#description' => t('Gutter from items.'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // mode.
+    $element['mode'] = [
+      '#type' => 'select',
+      '#title' => t('Mode'),
+      '#options' => [
+        'carousel' => t('Carousel'),
+        'gallery' => t('Gallery'),
+      ],
+      '#default_value' => $settings['mode'],
+      '#description' => t('With carousel everything slides to the side, while gallery uses fade animations and changes all slides at once.'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // Navigation.
+    $element['nav'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Navigation'),
+      '#default_value' => $settings['nav'],
+      '#description' => t('Controls the display and functionalities of controls components (prev/next buttons).'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+    // navPosition.
+    $element['navPosition'] = [
+      '#type' => 'select',
+      '#title' => t('Navigation position'),
+      '#options' => [
+        'top' => t('Top'),
+        'bottom' => t('Bottom'),
+      ],
+      '#default_value' => $settings['navPosition'],
+      '#description' => t('Display navigation above/below slides.'),
+      '#states' => [
+        'visible' => [
+          ':input[name="fields[field_image][settings_edit_form][settings][nav]"]' => [
+            'checked' => TRUE,
+          ],
+          ':input[type="checkbox"].tns--toggle-advanced-mode' => ['checked' => FALSE],
+        ],
+      ],
+    ];
+
+    // Nav as thumbnails.
+    $element['navAsThumbnails'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Navigation as thumbnails'),
+      '#default_value' => $settings['navAsThumbnails'],
+      '#description' => t('Use image thumbnails in navigation instead of dots.'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // Autoplay.
+    $element['autoplay'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Autoplay'),
+      '#default_value' => $settings['autoplay'],
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // AutoplayHoverPause.
+    $element['autoplayHoverPause'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Pause on hover'),
+      '#default_value' => $settings['autoplayHoverPause'],
+      '#description' => t('Pause autoplay on mouse hover.'),
+      '#states' => [
+        'visible' => [
+          ':input[name="fields[field_image][settings_edit_form][settings][autoplay]"]' => [
+            'checked' => TRUE,
+          ],
+          ':input[type="checkbox"].tns--toggle-advanced-mode' => ['checked' => FALSE],
+        ],
+      ],
+    ];
+
+    // Autoplay Button Output.
+    $element['autoplayButtonOutput'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Autoplay buttons'),
+      '#default_value' => $settings['autoplayButtonOutput'],
+      '#description' => t('Turn off/on arrow autoplay buttons.'),
+      '#states' => [
+        'visible' => [
+          ':input[name="fields[field_image][settings_edit_form][settings][autoplay]"]' => [
+            'checked' => TRUE,
+          ],
+          ':input[type="checkbox"].tns--toggle-advanced-mode' => ['checked' => FALSE],
+        ],
+      ],
+    ];
+
+    // Autoplay Position.
+    $element['autoplayPosition'] = [
+      '#type' => 'select',
+      '#title' => t('Autoplay position'),
+      '#options' => [
+        'top' => t('Top'),
+        'bottom' => t('Bottom'),
+      ],
+      '#default_value' => $settings['autoplayPosition'],
+      '#description' => t('Display autoplay controls above/below slides.'),
+      '#states' => [
+        'visible' => [
+          ':input[name="fields[field_image][settings_edit_form][settings][autoplay]"]' => [
+            'checked' => TRUE,
+          ],
+          ':input[name="fields[field_image][settings_edit_form][settings][autoplayButtonOutput]"]' => [
+            'checked' => TRUE,
+          ],
+          ':input[type="checkbox"].tns--toggle-advanced-mode' => ['checked' => FALSE],
+        ],
+      ],
+    ];
+
+    // Autoplay text start.
+    $element['autoplayTextStart'] = [
+      '#type' => 'textfield',
+      '#title' => t('Start Text'),
+      '#default_value' => $settings['autoplayTextStart'],
+      '#states' => [
+        'visible' => [
+          ':input[name="fields[field_image][settings_edit_form][settings][autoplay]"]' => [
+            'checked' => TRUE,
+          ],
+          ':input[name="fields[field_image][settings_edit_form][settings][autoplayButtonOutput]"]' => [
+            'checked' => TRUE,
+          ],
+          ':input[type="checkbox"].tns--toggle-advanced-mode' => ['checked' => FALSE],
+        ],
+      ],
+    ];
+
+    // Autoplay text stop.
+    $element['autoplayTextStop'] = [
+      '#type' => 'textfield',
+      '#title' => t('Stop Text'),
+      '#default_value' => $settings['autoplayTextStop'],
+      '#states' => [
+        'visible' => [
+          ':input[name="fields[field_image][settings_edit_form][settings][autoplay]"]' => [
+            'checked' => TRUE,
+          ],
+          ':input[name="fields[field_image][settings_edit_form][settings][autoplayButtonOutput]"]' => [
+            'checked' => TRUE,
+          ],
+          ':input[type="checkbox"].tns--toggle-advanced-mode' => ['checked' => FALSE],
+        ],
+      ],
+    ];
+
+    // Controls.
+    $element['controls'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Controls'),
+      '#default_value' => $settings['controls'],
+      '#description' => t('Controls the display and functionalities of nav components (dots).'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // Controls Position.
+    $element['controlsPosition'] = [
+      '#type' => 'select',
+      '#title' => t('Controls position'),
+      '#options' => [
+        'top' => t('Top'),
+        'bottom' => t('Bottom'),
+      ],
+      '#default_value' => $settings['controlsPosition'],
+      '#description' => t('Display controls above/below slides.'),
+      '#states' => [
+        'visible' => [
+          ':input[name="fields[field_image][settings_edit_form][settings][controls]"]' => [
+            'checked' => TRUE,
+          ],
+          ':input[type="checkbox"].tns--toggle-advanced-mode' => ['checked' => FALSE],
+        ],
+      ],
+    ];
+
+    // Controls text prev.
+    $element['controlsTextPrev'] = [
+      '#type' => 'textfield',
+      '#title' => t('Prev Text'),
+      '#default_value' => $settings['controlsTextPrev'],
+      '#states' => [
+        'visible' => [
+          ':input[name="fields[field_image][settings_edit_form][settings][controls]"]' => ['checked' => TRUE],
+          ':input[type="checkbox"].tns--toggle-advanced-mode' => ['checked' => FALSE],
+        ],
+      ],
+    ];
+
+    // Controls text next.
+    $element['controlsTextNext'] = [
+      '#type' => 'textfield',
+      '#title' => t('Next Text'),
+      '#default_value' => $settings['controlsTextNext'],
+      '#states' => [
+        'visible' => [
+          ':input[name="fields[field_image][settings_edit_form][settings][controls]"]' => [
+            'checked' => TRUE,
+          ],
+          ':input[type="checkbox"].tns--toggle-advanced-mode' => ['checked' => FALSE],
+        ],
+      ],
+    ];
+
+    // Slide by.
+    $element['slideBy'] = [
+      '#type' => 'textfield',
+      '#title' => t('Slide by'),
+      '#default_value' => $settings['slideBy'],
+      '#description' => t('Number of slides going on one "click". Enter a positive number or "page" to slide one page at a time.'),
+      '#element_validate' => ['settingsFormSlideByValidate'],
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // arrowKeys.
+    $element['arrowKeys'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Arrow Keys'),
+      '#default_value' => $settings['arrowKeys'],
+      '#description' => t('Allows using arrow keys to switch slides.'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // mouseDrag.
+    $element['mouseDrag'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Mouse Drag'),
+      '#default_value' => $settings['mouseDrag'],
+      '#description' => t('Turn off/on mouse drag.'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // Loop.
+    $element['loop'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Loop'),
+      '#default_value' => $settings['loop'],
+      '#description' => t('Moves throughout all the slides seamlessly.'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // Center.
+    $element['center'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Center'),
+      '#default_value' => $settings['center'],
+      '#description' => t('Center the active slide in the viewport.'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // Speed.
+    $element['speed'] = [
+      '#type' => 'number',
+      '#title' => t('Speed'),
+      '#default_value' => $settings['speed'],
+      '#description' => t('Pagination speed in milliseconds.'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // DimensionMobile.
+    $element['dimensionMobile'] = [
+      '#type' => 'number',
+      '#title' => t('Mobile dimension'),
+      '#default_value' => $settings['dimensionMobile'],
+      '#description' => t('Set the mobile dimensions in px.'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // ItemsMobile.
+    $element['itemsMobile'] = [
+      '#type' => 'number',
+      '#step' => '.1',
+      '#title' => t('Mobile items'),
+      '#default_value' => $settings['itemsMobile'],
+      '#description' => t('Maximum amount of items displayed at mobile.'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // DimensionDesktop.
+    $element['dimensionDesktop'] = [
+      '#type' => 'number',
+      '#title' => t('Desktop dimension'),
+      '#default_value' => $settings['dimensionDesktop'],
+      '#description' => t('Set the desktop dimensions in px.'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // itemsDesktop.
+    $element['itemsDesktop'] = [
+      '#type' => 'number',
+      '#step' => '.1',
+      '#title' => t('Desktop items'),
+      '#default_value' => $settings['itemsDesktop'],
+      '#description' => t('Maximum amount of items displayed at desktop.'),
+      '#states' => $hideOnAdvancedMode,
+    ];
+
+    // Advanced mode.
+    $element['advancedMode'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Advanced mode'),
+      '#default_value' => $settings['advancedMode'],
+      '#description' => t('In advanced mode you can use JSON object to override config.'),
+      '#attributes' => ['class' => ['tns--toggle-advanced-mode']],
+    ];
+
+    $json_config_current = $settings['configJson'] ?: '[]';
+
+    $element['configJson'] = [
+      '#type' => 'textarea',
+      '#title' => t('Use a JSON object to configure the slider'),
+      '#default_value' => json_encode(json_decode($json_config_current, JSON_PRETTY_PRINT)),
+      '#description' => t('Tiny Slider configuration expressed as JSON.<br />
+        <b>WARNING:</b> this will override any existing settings'),
+      '#rows' => 30,
+      '#states' => [
+        'visible' => [
+          ':input[type="checkbox"].tns--toggle-advanced-mode' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function tiny_slider_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $instance['display'][$view_mode]['settings'];
+  $summary = [];
+
+  if ($display['type'] == 'tiny_slider_field_formatter') {
+    $itemsdisplay = $settings['items'] ? $settings['items'] : 3;
+    $mode = $settings['mode'] ? $settings['mode'] : 'carousel';
+    $nav = $settings['nav'] ? 'TRUE' : 'FALSE';
+    $navposition = $settings['navPosition'] ? $settings['navPosition'] : 'top';
+    $navasthumbnails = $settings['navAsThumbnails'] ? 'TRUE' : 'FALSE';
+    $autoplay = $settings['autoplay'] ? 'TRUE' : 'FALSE';
+    $autoplaypause = $settings['autoplayHoverPause'] ? 'TRUE' : 'FALSE';
+    $autoplaybuttonoutput = $settings['autoplayButtonOutput'] ? 'FALSE' : 'FALSE';
+    $autoplaytextstart = $settings['autoplayTextStart'] ? $settings['autoplayTextStart'] : 'start';
+    $autoplaytextstop = $settings['autoplayTextStop'] ? $settings['autoplayTextStop'] : 'stop';
+    $controls = $settings['controls'] ? 'TRUE' : 'FALSE';
+    $controlstextprev = $settings['controlsTextPrev'] ? $settings['controlsTextPrev'] : 'prev';
+    $controlstextnext = $settings['controlsTextNext'] ? $settings['controlsTextNext'] : 'next';
+    $slideby = $settings['slideBy'] ? $settings['slideBy'] : 'page';
+    $arrowkeys = $settings['arrowKeys'] ? 'TRUE' : 'FALSE';
+    $mousedrag = $settings['mouseDrag'] ? 'TRUE' : 'FALSE';
+    $loop = $settings['loop'] ? 'TRUE' : 'FALSE';
+    $center = $settings['center'] ? 'TRUE' : 'FALSE';
+    $speed = $settings['speed'] ? $settings['speed'] : '300';
+    $advancedMode = $settings['advancedMode'] ? 'TRUE' : 'FALSE';
+    $json_config_default = json_encode($settings['configJson'] ?: [], JSON_PRETTY_PRINT);
+
+    if ($settings['advancedMode']) {
+      $summary[] = t('Advanced mode enabled: ') . $advancedMode;
+      $summary[] = t('Config: ') . $settings['configJson'] ?: $json_config_default;
+    }
+    else {
+      $summary[] = t('TinySlider settings summary.');
+      $summary[] = t('Image style: ') . $settings['image_style'];
+
+      $summary[] = t('Link image to: ') . $settings['image_link'] ?? t('Nothing');
+      $summary[] = t('Amount of items displayed: ') . $itemsdisplay;
+      $summary[] = t('Gutter from items: ') . $settings['gutter'] . 'px';
+      $summary[] = t('Mode: ') . $mode;
+      $summary[] = t('Display nav: ') . $nav;
+      $summary[] = t('Nav position: ') . $navposition;
+      $summary[] = t('Nav as thumbnails: ') . $navasthumbnails;
+      $summary[] = t('Autoplay: ') . $autoplay;
+      $summary[] = t('Autoplay pause on mouse hover: ') . $autoplaypause;
+      $summary[] = t('Show autoplay buttons: ') . $autoplaybuttonoutput;
+      $summary[] = t('Start text: ') . $autoplaytextstart;
+      $summary[] = t('Stop text: ') . $autoplaytextstop;
+      $summary[] = t('Show controls: ') . $controls;
+      $summary[] = t('Prev text: ') . $controlstextprev;
+      $summary[] = t('Next text: ') . $controlstextnext;
+      $summary[] = t('Slide by: ') . $slideby;
+      $summary[] = t('Arrow keys: ') . $arrowkeys;
+      $summary[] = t('Mouse drag: ') . $mousedrag;
+      $summary[] = t('Loop: ') . $loop;
+      $summary[] = t('Center: ') . $center;
+      $summary[] = t('Speed: ') . $speed . 'ms';
+      $summary[] = t('Advanced mode enabled: ') . $advancedMode;
+    }
+
+    if ($settings['dimensionMobile']) {
+      $summary[] = t('Mobile dimensions: ') . $settings['dimensionMobile'] . 'px';
+    }
+
+    if ($settings['itemsMobile']) {
+      $summary[] = t('Mobile items to show: ') . $settings['itemsMobile'];
+    }
+
+    if ($settings['dimensionDesktop']) {
+      $summary[] = t('Desktop dimensions: ') . $settings['dimensionDesktop'] . 'px';
+    }
+
+    if ($settings['itemsDesktop']) {
+      $summary[] = t('Desktop items to show: ') . $settings['itemsDesktop'];
+    }
+
+  }
+  return implode('<br />', $summary);
+}
+
+function settingsFormSlideByValidate($element, &$form_state) {
+  $styleOptions = $element['#value'];
+  if (!preg_match('~[0-9]+~', $styleOptions) && ($styleOptions !== 'page')) {
+    form_error($element, t('@value is not right. The "Slide by" value should either be an Integer or equal to the term "page".', ['!name' => t($element['#value'])]));
+  }
+}
+
+function tiny_slider_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, &$items, $display) {
+  $library_location = config_get('tiny_slider.settings', 'library');
+  $settings = $display['settings'];
+  $elements = [];
+
+  $files = field_get_items($entity_type, $entity, $field['field_name'], $langcode);
+
+  if (empty($files)) {
+    return $elements;
+  }
+
+  $url = NULL;
+  $image_link_setting = $settings['image_link'];
+  // Check if the formatter involves a link.
+  if ($image_link_setting == 'content') {
+    if (!$entity->isNew()) {
+      $url = $entity->uri()['path'];
+    }
+  }
+  elseif ($image_link_setting == 'file') {
+    $link_file = TRUE;
+  }
+
+  // Image style settings – standard and responsive.
+  $image_style_setting = $settings['image_style'];
+
+  foreach ($files as $delta => $file) {
+    if (isset($link_file)) {
+      $url = [
+        'path' => file_create_url($file['uri']),
+        'options' => [],
+      ];
+    }
+    if (!empty($image_style_setting)) {
+      // Use the standard image style theme function.
+      $elements[$delta] = [
+        '#theme' => 'image_formatter',
+        '#item' => $file,
+        '#image_style' => $display['settings']['image_style'],
+        '#path' => isset($url) ? $url : '',
+      ];
+    }
+  }
+
+  $tiny_slider_default_settings = defaultSettings();
+  $settings_default = $tiny_slider_default_settings;
+
+  foreach ($settings_default as $k => $v) {
+    $s = $settings[$k];
+    $settings_default[$k] = isset($s) ? $s : $settings_default[$k];
+  }
+
+  // If config JSON is set use that as real config.
+  if (isValidJson($settings['configJson'])) {
+    $jsonConfig = json_decode($settings['configJson'], JSON_PRETTY_PRINT);
+    $settings = $jsonConfig;
+  }
+
+  backdrop_add_js(backdrop_get_path('module', 'tiny_slider') . '/js/tiny_slider.js');
+  backdrop_add_css(backdrop_get_path('module', 'tiny_slider') . '/css/tiny_slider.css');
+
+  switch ($library_location) {
+    case 'cdn':
+      backdrop_add_js('https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.3/min/tiny-slider.js', [
+        'type' => 'external',
+        'defer' => 'defer',
+      ]);
+      backdrop_add_css('https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.3/tiny-slider.css', [
+        'type' => 'external',
+        'defer' => 'defer',
+      ]);
+      break;
+
+    case 'local':
+      backdrop_add_js(backdrop_get_path('module', 'tiny_slider') . '/libraries/tiny-slider/dist/tiny-slider.js');
+      backdrop_add_css(backdrop_get_path('module', 'tiny_slider') . '/libraries/tiny-slider/dist/tiny-slider.css');
+  }
+
+  render($attached);
+  $settings['uniqueFieldID'] = $instance['field_name'];
+
+  return [
+    '#theme' => 'tiny_slider_field_formatter',
+    '#elements' => $elements,
+    '#settings' => $settings,
+  ];
+
+
+}
+
+/**
+ * Implements hook_theme().
+ */
+function tiny_slider_theme() {
+  return [
+    'tiny_slider_field_formatter' => [
+      'variables' => ['elements' => NULL, 'settings' => NULL],
+      'template' => 'theme/tiny-slider-field-formatter',
+    ],
+  ];
+}
+
+function template_preprocess_tiny_slider_field_formatter(&$variables) {
+  $items = $variables['elements'];
+
+  $settings = _tiny_slider_format_settings($variables['settings']);
+
+  $variables['attributes']['class'][] = 'tiny-slider-wrapper';
+  $variables['attributes']['class'][] = 'tiny-slider';
+  $variables['attributes']['class'][] = 'tiny-slider-theme';
+  if (isValidJson($settings['configJson'])) {
+    $config = json_decode($settings['configJson']);
+    $variables['attributes']['data-settings'] = json_encode($config, JSON_FORCE_OBJECT);
+  }
+  else {
+    $variables['attributes']['data-settings'] = json_encode($settings, JSON_FORCE_OBJECT);
+  }
+
+  $html = $navAsThumbs = '';
+  if (!empty($items)) {
+    $i = 0;
+    foreach ($items as $item) {
+      $renderedItem = render($item);
+      $html .= '<div class="tiny-slider-item-inner tiny-slider-item-inner' . $i . '">' . $renderedItem . '</div>';
+
+      if ($variables['settings']['navAsThumbnails']) {
+        $navAsThumbs .= '<li class="tiny-slider-thumb-item-inner tiny-slider-thumb-item-inner' . $i . '">' . $renderedItem . '</li>';
+      }
+      $i++;
+    }
+  }
+  $output = [
+    '#type' => 'markup',
+    '#markup' => $html,
+  ];
+  $variables['output'] = render($output);
+
+  if ($variables['settings']['navAsThumbnails']) {
+    $output = [
+      '#type' => 'markup',
+      '#markup' => $navAsThumbs,
+    ];
+    $variables['thumbs'] = render($output);
+  }
+
+}
+
+
+
