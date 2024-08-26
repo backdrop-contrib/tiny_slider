@@ -1,6 +1,8 @@
 <?php if ($attributes): ?>
 <div data-settings='<?php print $attributes['data-settings']; ?>'
-     class="tiny-slider-wrapper tiny-slider tns-slider tns-carousel tns-subpixel tns-calc tns-horizontal">
+  <?php if (!empty($attributes['class'])) {
+    print 'class="' . implode(' ', $attributes['class']) . '"';
+  } ?>>
   <?php print $output; ?>
   <?php endif; ?>
   <?php if ($settings['navAsThumbnails'] == '1'): ?>

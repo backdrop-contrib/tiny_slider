@@ -269,7 +269,7 @@ function _tiny_slider_format_settings($settings) {
   return $settings;
 }
 
-function defaultSettings($key = NULL) {
+function _tiny_slider_defaultSettings($key = NULL) {
   $settings = [
     'image_style' => '',
     'responsive_image_style' => '',
@@ -389,7 +389,7 @@ function tiny_slider_field_formatter_info() {
     'tiny_slider_field_formatter' => [
       'label' => t('Tiny Slider Carousel'),
       'field types' => ['image'],
-      'settings' => defaultSettings(),
+      'settings' => _tiny_slider_defaultSettings(),
     ],
   ];
 }
@@ -914,7 +914,7 @@ function tiny_slider_field_formatter_view($entity_type, $entity, $field, $instan
     }
   }
 
-  $tiny_slider_default_settings = defaultSettings();
+  $tiny_slider_default_settings = _tiny_slider_defaultSettings();
   $settings_default = $tiny_slider_default_settings;
 
   foreach ($settings_default as $k => $v) {
