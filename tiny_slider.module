@@ -170,7 +170,7 @@ function tiny_slider_autoload_info() {
  */
 function _tiny_slider_default_settings($key = NULL) {
   $settings = [
-    'image_style' => '',
+    'image_style' => 'card',
     'responsive_image_style' => '',
     'image_link' => '',
     'items' => 1,
@@ -271,7 +271,7 @@ function _tiny_slider_format_settings($settings) {
 
 function _tiny_slider_defaultSettings($key = NULL) {
   $settings = [
-    'image_style' => '',
+    'image_style' => 'card',
     'responsive_image_style' => '',
     'image_link' => '',
     'items' => 1,
