@@ -17,7 +17,7 @@ function tiny_slider_views_plugins() {
         'uses options' => TRUE,
         'uses row plugin' => TRUE,
         'uses grouping' => TRUE,
-        'uses fields' => TRUE,
+        'uses fields' => FALSE,
         'uses row class' => TRUE,
         'type' => 'normal',
         'path' => backdrop_get_path('module', 'tiny_slider'),
