@@ -205,6 +205,21 @@ function _tiny_slider_default_settings($key = NULL) {
  * Return formatted js array of settings.
  */
 function _tiny_slider_format_settings($settings) {
+  // Sanitize text fields that could contain XSS
+  $text_fields = [
+    'autoplayTextStart',
+    'autoplayTextStop',
+    'controlsTextPrev',
+    'controlsTextNext',
+    'slideBy'
+  ];
+
+  foreach ($text_fields as $field) {
+    if (isset($settings[$field])) {
+      $settings[$field] = check_plain($settings[$field]);
+    }
+  }
+
   $settings['items'] = (float) $settings['items'];
 
   $settings['gutter'] = (int) $settings['gutter'];
@@ -245,8 +260,7 @@ function _tiny_slider_format_settings($settings) {
   }
 
   if ($settings['navAsThumbnails']) {
-    ;
-    $settings['navContainer'] = '.thumbs-slider[data-field-id="' . $settings['uniqueFieldID'] . '"]';
+    $settings['navContainer'] = '.thumbs-slider[data-field-id="' . check_plain($settings['uniqueFieldID']) . '"]';
   }
 
   if (isset($settings['image_style'])) {
@@ -263,8 +277,18 @@ function _tiny_slider_format_settings($settings) {
 
   $settings['advancedMode'] = (bool) $settings['advancedMode'];
 
-  $config_json = json_decode($settings['configJson']);
-  $settings['configJson'] = json_encode($config_json);
+  // Sanitize JSON config
+  if (!empty($settings['configJson'])) {
+    $config_json = json_decode($settings['configJson']);
+    if ($config_json) {
+      array_walk_recursive($config_json, function(&$value) {
+        if (is_string($value)) {
+          $value = check_plain($value);
+        }
+      });
+      $settings['configJson'] = json_encode($config_json);
+    }
+  }
 
   return $settings;
 }
@@ -980,12 +1004,21 @@ function template_preprocess_tiny_slider_field_formatter(&$variables) {
   $variables['attributes']['class'][] = 'tiny-slider-wrapper';
   $variables['attributes']['class'][] = 'tiny-slider';
   $variables['attributes']['class'][] = 'tiny-slider-theme';
+
+  // Sanitize all settings before output
   if (isValidJson($settings['configJson'])) {
     $config = json_decode($settings['configJson']);
-    $variables['attributes']['data-settings'] = json_encode($config, JSON_FORCE_OBJECT);
+    if ($config) {
+      array_walk_recursive($config, function(&$value) {
+        if (is_string($value)) {
+          $value = check_plain($value);
+        }
+      });
+      $variables['attributes']['data-settings'] = json_encode($config, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+    }
   }
   else {
-    $variables['attributes']['data-settings'] = json_encode($settings, JSON_FORCE_OBJECT);
+    $variables['attributes']['data-settings'] = json_encode($settings, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
   }
 
   $html = $navAsThumbs = '';
@@ -1014,7 +1047,6 @@ function template_preprocess_tiny_slider_field_formatter(&$variables) {
     ];
     $variables['thumbs'] = render($output);
   }
-
 }
 
 
